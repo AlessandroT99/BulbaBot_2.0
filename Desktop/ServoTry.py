@@ -1,83 +1,40 @@
-import RPi.GPIO as GPIO
 import time
+from os import system
 
 from LegsPinConfiguration import *
 
-GPIO.setmode(GPIO.BCM)
-
-GPIO.setup(SxF_shoulder,GPIO.OUT)
-GPIO.setup(SxF_femur,GPIO.OUT)
-GPIO.setup(SxF_tibia,GPIO.OUT)
-
-GPIO.setup(SxM_shoulder,GPIO.OUT)
-GPIO.setup(SxM_femur,GPIO.OUT)
-GPIO.setup(SxM_tibia,GPIO.OUT)
-
-GPIO.setup(SxR_shoulder,GPIO.OUT)
-GPIO.setup(SxR_femur,GPIO.OUT)
-GPIO.setup(SxR_tibia,GPIO.OUT)
-
-GPIO.setup(DxF_shoulder,GPIO.OUT)
-GPIO.setup(DxF_femur,GPIO.OUT)
-GPIO.setup(DxF_tibia,GPIO.OUT)
-
-GPIO.setup(DxM_shoulder,GPIO.OUT)
-GPIO.setup(DxM_femur,GPIO.OUT)
-GPIO.setup(DxM_tibia,GPIO.OUT)
-
-GPIO.setup(DxR_shoulder,GPIO.OUT)
-GPIO.setup(DxR_femur,GPIO.OUT)
-GPIO.setup(DxR_tibia,GPIO.OUT)
+def angleConversion(alpha):
+	#map from 0-180 grades to 50-250 time period
+	return alpha*10/9+50
 
 #NameConfiguration: Servo _ Sx/Dx F(Front)/M(Middle)/R(Rear) S(Shoulder)/F(Femur)/T(Tibia)
-frequency = 49
-Servo_SxFS = GPIO.PWM(SxF_shoulder,frequency)
-Servo_SxFF = GPIO.PWM(SxF_femur,frequency)
-Servo_SxFT = GPIO.PWM(SxF_tibia,frequency)
-Servo_SxMS = GPIO.PWM(SxM_shoulder,frequency)
-Servo_SxMF = GPIO.PWM(SxM_femur,frequency)
-Servo_SxMT = GPIO.PWM(SxM_tibia,frequency)
-Servo_SxRS = GPIO.PWM(SxR_shoulder,frequency)
-Servo_SxRF = GPIO.PWM(SxR_femur,frequency)
-Servo_SxRT = GPIO.PWM(SxR_tibia,frequency)
-Servo_DxFS = GPIO.PWM(DxF_shoulder,frequency)
-Servo_DxFF = GPIO.PWM(DxF_femur,frequency)
-Servo_DxFT = GPIO.PWM(DxF_tibia,frequency)
-Servo_DxMS = GPIO.PWM(DxM_shoulder,frequency)
-Servo_DxMF = GPIO.PWM(DxM_femur,frequency)
-Servo_DxMT = GPIO.PWM(DxM_tibia,frequency)
-Servo_DxRS = GPIO.PWM(DxR_shoulder,frequency)
-Servo_DxRF = GPIO.PWM(DxR_femur,frequency)
-Servo_DxRT = GPIO.PWM(DxR_tibia,frequency)
+#Set default angles
+Servo_SxFS = angleConversion(90)
+Servo_SxFF = angleConversion(90)
+Servo_SxFT = angleConversion(90)
+Servo_SxMS = angleConversion(90)
+Servo_SxMF = angleConversion(90)
+Servo_SxMT = angleConversion(90)
+Servo_SxRS = angleConversion(90)
+Servo_SxRF = angleConversion(90)
+Servo_SxRT = angleConversion(90)
+Servo_DxFS = angleConversion(90)
+Servo_DxFF = angleConversion(90)
+Servo_DxFT = angleConversion(90)
+Servo_DxMS = angleConversion(90)
+Servo_DxMF = angleConversion(90)
+Servo_DxMT = angleConversion(90)
+Servo_DxRS = angleConversion(90)
+Servo_DxRF = angleConversion(90)
+Servo_DxRT = angleConversion(90)
 
-#Start all servos PWM
-Servo_SxFS.start(0)
-Servo_SxFF.start(0)
-Servo_SxFT.start(0)
-Servo_SxMS.start(0)
-Servo_SxMF.start(0)
-Servo_SxMT.start(0)
-Servo_SxRS.start(0)
-Servo_SxRF.start(0)
-Servo_SxRT.start(0)
-Servo_DxFS.start(0)
-Servo_DxFF.start(0)
-Servo_DxFT.start(0)
-Servo_DxMS.start(0)
-Servo_DxMF.start(0)
-Servo_DxMT.start(0)
-Servo_DxRS.start(0)
-Servo_DxRF.start(0)
-Servo_DxRT.start(0)
-
-#Control's group defining
-DxShoulders 	= {Servo_DxFS, Servo_DxMS, Servo_DxRS}
-DxFemurs 	= {Servo_DxFF, Servo_DxMF, Servo_DxRF}
-DxTibias 	= {Servo_DxFT, Servo_DxMT, Servo_DxRT}
-SxShoulders 	= {Servo_SxFS, Servo_SxMS, Servo_SxRS}
-SxFemurs	= {Servo_SxFF, Servo_SxMF, Servo_SxRF}
-SxTibias 	= {Servo_SxFT, Servo_SxMT, Servo_SxRT}
-
+#Control group defining
+DxShoulders = {Servo_DxFS, Servo_DxMS, Servo_DxRS}
+DxFemurs = {Servo_DxFF, Servo_DxMF, Servo_DxRF}
+DxTibias = {Servo_DxFT, Servo_DxMT, Servo_DxRT}
+SxShoulders = {Servo_SxFS, Servo_SxMS, Servo_SxRS}
+SxFemurs = {Servo_SxFF, Servo_SxMF, Servo_SxRF}
+SxTibias = {Servo_SxFT, Servo_SxMT, Servo_SxRT}
 
 time.sleep(1)
 

@@ -1,6 +1,6 @@
 @echo off
 
-SET list=Desktop catkin_ws
+SET list=catkin_ws softwareTries
 
 ECHO Available folders for saving: 
 (FOR %%a IN (%list%) DO (

@@ -1,26 +1,28 @@
 #Pins number defined through the following code
 # Sx/Dx F(Front)/M(Middle)/R(Rear) _ shoulder/femur/tibia
 
-SxF_shoulder 	= 14 
-SxF_femur 	= 15
-SxF_tibia 	= 18
+#Pins set as GPIO Value #Pin Value
+
+SxF_shoulder 	= 2 #3
+SxF_femur 	= 14 #8
+SxF_tibia 	= 15 #10
  
-SxM_shoulder	= 23
-SxM_femur	= 24
-SxM_tibia 	= 25
+SxM_shoulder	= 18 #16
+SxM_femur	= 24 #18
+SxM_tibia 	= 25 #24
 
-SxR_shoulder 	= 8
-SxR_femur	= 7
-SxR_tibia 	= 1
+SxR_shoulder 	= 19 #35
+SxR_femur	= 16 #36
+SxR_tibia 	= 26 #37
 
-DxF_shoulder 	= 3
-DxF_femur	= 4
-DxF_tibia 	= 17
+DxF_shoulder 	= 3 #5
+DxF_femur	= 4 #7
+DxF_tibia 	= 17 #11
 
-DxM_shoulder 	= 27
-DxM_femur	= 22
-DxM_tibia 	= 10
+DxM_shoulder 	= 27 #13
+DxM_femur	= 22 #15
+DxM_tibia 	= 10 #19
 
-DxR_shoulder 	= 9
-DxR_femur	= 11
-DxR_tibia 	= 0
+DxR_shoulder 	= 9 #21
+DxR_femur	= 11 #23
+DxR_tibia 	= 5 #29
