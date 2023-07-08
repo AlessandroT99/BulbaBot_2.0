@@ -1,0 +1,6 @@
+devel_space: /home/ubuntu/catkin_ws/src/bulbabot/devel
+install: false
+install_space: /home/ubuntu/catkin_ws/src/bulbabot/install
+profile: default
+source_space: /home/ubuntu/catkin_ws/src/bulbabot/src
+workspace: /home/ubuntu/catkin_ws/src/bulbabot
