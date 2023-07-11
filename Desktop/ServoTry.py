@@ -5,7 +5,7 @@ from LegsPinConfiguration import *
 
 def angleConversion(alpha):
 	#map from 0-180 grades to 50-250 time period
-	return alpha*10/9+50
+	return round(alpha*10/9+50)
 
 #NameConfiguration: Servo _ Sx/Dx F(Front)/M(Middle)/R(Rear) S(Shoulder)/F(Femur)/T(Tibia)
 #Set default angles
