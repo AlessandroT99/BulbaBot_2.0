@@ -26,7 +26,7 @@ def properWorkingMode():
 def angleConversion(alpha):
 	if int(alpha)>180 or int(alpha)<0:
 		raise TypeError("Only degrees values between 0 and 180 are allowed")
-	return round(int(alpha)*10/9+50)
+	return round(float(alpha)*10/9+50)
 
 ## DESCRIPTION: check correctness of the angle and the publish it to the servoBlaster manager
 def echoAngle(localServo,newAngle,velocity):
