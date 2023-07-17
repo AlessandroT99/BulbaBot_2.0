@@ -1,20 +1,22 @@
 @echo off
 
 :start
-SET /p again="Do you want to update only firmware folder? [y/n]: "
+SET /A e=0
+SET /p again="Do you want to update only bulbabot pkg in catkin_ws folder? [y/n]: "
 IF /I %again%==y (GOTO default) ELSE (
-	IF /I %again%==n (GOTO end) ELSE (
+	IF /I %again%==n (GOTO notDefault) ELSE (
 		SET /A e=1
 		GOTO error
 	)
 )
 
 :default
-ECHO Uploading the new project files from %final% to Bulbabot
+ECHO Uploading the new project files from bulbabot pkg to Bulbabot
 ECHO.
-scp -r C:\Users\Alessandro\Documents\GitHub\BulbaBot2.0\firmware ubuntu@bulbabot.local:/home/ubuntu
+scp -r C:\Users\Alessandro\Documents\GitHub\BulbaBot2.0\catkin_ws\src\bulbabot ubuntu@bulbabot.local:/home/ubuntu/catkin_ws/src
 GOTO end
 
+:notDefault
 ECHO Available folders for saving: 
 dir 
 

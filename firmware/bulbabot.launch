@@ -1,0 +1,4 @@
+<launch>
+	<node name="telegram_input" pkg="bulbabot" type="telegram_input.py" output="screen"/>
+	<node name="listener" pkg="bulbabot" type="listener.py" output="screen"/>
+</launch>

@@ -1,0 +1,8 @@
+prefix=/home/ubuntu/catkin_ws/devel/.private/bulbabot
+
+Name: bulbabot
+Description: Description of bulbabot
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

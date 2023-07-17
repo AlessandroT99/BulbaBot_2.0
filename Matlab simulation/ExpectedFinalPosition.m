@@ -14,8 +14,8 @@ for i = 1:3
     subplot(2,3,i)
     yline(rd.data(i),'r-','LineWidth',1.5), hold on, grid on
     plot(re.time,re.data(:,i),'k--'), legend([coordinates(i),'_d'],[coordinates(i),'_e'])
-    title([coordinates(i),' coordinate behavior'])
+    title([coordinates(i),' coordinate behaviour'])
     subplot(2,3,3+i)
     plot(e.time,e.data(:,i),'k-'), hold on, grid on
-    title([coordinates(i),' error behavior'])
+    title([coordinates(i),' error behaviour'])
 end

@@ -1,0 +1,5 @@
+bulbabot
+/home/ubuntu/catkin_ws/devel/.private/bulbabot/cmake.lock /home/ubuntu/catkin_ws/devel/./cmake.lock
+/home/ubuntu/catkin_ws/devel/.private/bulbabot/share/bulbabot/cmake/bulbabotConfig-version.cmake /home/ubuntu/catkin_ws/devel/share/bulbabot/cmake/bulbabotConfig-version.cmake
+/home/ubuntu/catkin_ws/devel/.private/bulbabot/share/bulbabot/cmake/bulbabotConfig.cmake /home/ubuntu/catkin_ws/devel/share/bulbabot/cmake/bulbabotConfig.cmake
+/home/ubuntu/catkin_ws/devel/.private/bulbabot/lib/pkgconfig/bulbabot.pc /home/ubuntu/catkin_ws/devel/lib/pkgconfig/bulbabot.pc
