@@ -2,7 +2,6 @@
 
 from time import sleep
 from os import system
-from inspect import currentframe, getframeinfo
 
 import LegsParameters
 
@@ -77,7 +76,7 @@ def servoInit():
 	servoString = ""
 	for i in servoList:
 		servoString = servoString + str(i.pin) + ","
-	servoStart = '/home/ubuntu/servoblaster/servod --p1pins="%s" --pcm &' %servoString[:-1]
+	servoStart = 'sudo /home/ubuntu/servoblaster/servod --p1pins="%s" --pcm &' %servoString[:-1]
 	system(servoStart)
 	sleep(2)
 	for i in servoList:
@@ -136,3 +135,5 @@ Leg_dxF = [dxSF,dxFF,dxTF]
 Leg_dxM = [dxSM,dxFM,dxTM]
 Leg_dxR = [dxSR,dxFR,dxTR]
 Side_dx = [Leg_dxF,Leg_dxM,Leg_dxR]
+
+COMMUNICATION_FREQUENCY = 10

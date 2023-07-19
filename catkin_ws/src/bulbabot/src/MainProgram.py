@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 
 from time import sleep
-from os import system
-from std_msgs.msg import UInt16MultiArray
+from bulbabot.msg import positionArray
+from std_msgs.msg import UInt8
 from inspect import currentframe, getframeinfo
 
 import rospy
 
 import ServosConfiguration
-
 
 #Class and functions definition ---------------------------------------- 
 ## DESCRIPTION: before starts the firmware, check the correct initialization of the working mode
@@ -20,10 +19,18 @@ def properWorkingMode():
 		raise ValueError("Working Mode has not been setted properly. Check InitialConfiguration.py - " + str(LINEINFO_workingMode.lineno))
 	
 ## DESCRIPTION: set the angle the gets back from the Control Loop execution for a single leg
-def publishAngles(Leg, theta):
+def publishAngles(data):
+	theta = [data.data[0],data.data[1],data.data[2]]
+	Leg = data.data[3]
 	for i in len(theta):
 		ServosConfiguration.echoAngle(Leg[i], ServosConfiguration.angleConversion(theta[i]))
 		print("Set " + Leg[i].name + " at " + str(theta[i]) + " degrees")
+
+def connection0(data):
+	rospy.loginfo(str(data.data))
+	if data.data == 0:
+		connection = 1
+		rospy.loginfo("Connected with Control Loop succesfully")
 
 ## DESCRIPTION: initialize ROS node and subscribing nodes and callback functions
 def MPnode_init():
@@ -33,22 +40,26 @@ def MPnode_init():
     #name for our 'listener' node so that multiple listeners can
     #run simultaneously.
     rospy.init_node('Main_Program', anonymous=True)
-    rospy.Subscriber("Final_Angle", UInt16MultiArray, publishAngles)
+    rospy.Subscriber("Final_Angle", positionArray, publishAngles)
+    rospy.Subscriber("Estabilish_Connection0", UInt8, connection0)
 
 #Global variable definition --------------------------------------------
+rd = positionArray()
+connection = 0
 
 #Global defines --------------------------------------------------------
 LINEINFO_workingMode = getframeinfo(currentframe())
 TIBIAS_DEBUG 	= 0 	#check working state of the motors
-KEYBOARD 		= 1 	#set manually an angle of a motor
-WORKING 		= 0		#working mode
+KEYBOARD 		= 0 	#set manually an angle of a motor
+WORKING 		= 1		#working mode
 
 WORKING_MODES = {TIBIAS_DEBUG, KEYBOARD, WORKING}
 
 #Init ------------------------------------------------------------------
 MPnode_init()
-positionPublisher = rospy.Publisher("Desidered_Position", UInt16MultiArray, queue_size = 18)
-rate = rospy.Rate(10000)
+positionPublisher = rospy.Publisher("Desidered_Position", positionArray, queue_size = 18)
+transmitterConnection = rospy.Publisher("Estabilish_Connection1", UInt8, queue_size = 2)
+rate = rospy.Rate(round(ServosConfiguration.COMMUNICATION_FREQUENCY/10))
 
 #Main ------------------------------------------------------------------
 if __name__ == '__main__':
@@ -110,7 +121,16 @@ if __name__ == '__main__':
 
 	elif WORKING:
 		print("Welcome user, BulbaBot 2.0 is awake, and ready to follow your instructions.\n")
-		rd = [189,139,-23]
-		rospy.loginfo(rd)
-		positionPublisher.publish(rd)
+		rd.x = 189
+		rd.y = 139
+		rd.z = -23
+		connection = 0
+		rospy.loginfo("Contacting Control Loop...")
+		while ~connection: 
+			transmitterConnection.publish(int('1'))
+			rospy.loginfo("1")
+		while 1:
+			rospy.loginfo("Requested position: [%d,%d,%d]",rd.x,rd.y,rd.z)
+			positionPublisher.publish(rd)
+			rate.sleep()
 

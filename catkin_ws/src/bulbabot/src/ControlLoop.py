@@ -2,7 +2,9 @@
 
 import scipy
 import rospy
-from std_msgs.msg import UInt16MultiArray
+from bulbabot.msg import positionArray
+from std_msgs.msg import UInt8
+from ServosConfiguration import COMMUNICATION_FREQUENCY
 from math import cos, sin, pi, pow
 
 #Class and functions definition ----------------------------------------
@@ -23,7 +25,7 @@ def q_dotGenerator(q,ke):
     q2_dot = J1[2]*ke[1]+J2[2]*ke[2]+J3[2]*ke[3]
     q3_dot = J1[3]*ke[1]+J2[3]*ke[2]+J3[3]*ke[3]
     q_dot = [q1_dot,q2_dot,q3_dot]
-
+    
     return q_dot
 
 ## DESCRIPTION: Applying forward kinematics theory the real angle is converted into the real position coordinates
@@ -42,9 +44,12 @@ def forwardKinematics(q):
     ye = T2[3]
     ze = T3[3]
 
-    re = [xe,ye,ze]
+    rx = positionArray()
+    rx.x = xe
+    rx.y = ye
+    rx.z = ze
 
-    return re
+    return rx
 
 ## DESCRIPTION: This function compute the error from the ideal angle obtained from Jacobian calculation
 def errorInvestigation(q_ideal_deg):
@@ -89,18 +94,20 @@ def positiveValueFilter(var):
     
 ## DESCRIPTION: Main program of the Control Loop executed as callback when an angle is published from another ROS node
 def executeLoop(rd):
-    xd = rd[0]
-    yd = rd[1]
-    zd = rd[2]
+    xd = rd.data[0]
+    yd = rd.data[1]
+    zd = rd.data[2]
+    rospy.loginfo("Received position: [%d,%d,%d]",xd,yd,zd)
 
     #Evaluate the coordinate error and multiply it to its gain
     coordinateErr = [xd-xe,yd-ye,zd-ze]
-    while coordinateErr > ACCEPTED_ERROR:
+    while (coordinateErr[0] > ACCEPTED_ERROR and coordinateErr[1] > ACCEPTED_ERROR and coordinateErr[2] > ACCEPTED_ERROR):
         ke = [xG*coordinateErr[1],yG*coordinateErr[2],zG*coordinateErr[3]]
     
         #Evaluate q_dot
         q_dot = q_dotGenerator(q,ke)
-        
+        rospy.loginfo("q_dot evaluated: [%d,%d,%d]",q_dot[0],q_dot[1],q_dot[2])
+
         #Integrate q_dot to have q <=> -pi <= q <= pi
         q_rad_double = scipy.integrate.simps(q_dot)
         if q_rad_double < -pi: 
@@ -111,6 +118,7 @@ def executeLoop(rd):
         #Find the value of the real reached angle in degrees
         q_deg_double = q_rad_double*180/pi
         q_real_deg = errorInvestigation(q_deg_double)
+        rospy.loginfo("q_real_deg evaluated: [%d,%d,%d]",q_real_deg[0],q_real_deg[1],q_real_deg[2])
 
         #Evaluate the reached angle in radiants
         q_real_rad = q_real_deg*pi/180
@@ -119,7 +127,13 @@ def executeLoop(rd):
         re = forwardKinematics(q_real_rad)
 
         anglePublisher.publish(re)
-        rospy.loginfo(re)
+        rospy.loginfo("Sent position: [%d,%d,%d]",re.x,re.y,re.z)
+        rate.sleep()
+
+def connection1(data):
+    if data.data == 1:
+        rospy.loginfo("Connected with Main Program succesfully")
+        receiverConnection.publish(int('0'))
         rate.sleep()
 
 ## DESCRIPTION: initialize ROS node and subscribing nodes and callback functions
@@ -130,7 +144,8 @@ def CLnode_init():
     #name for our 'listener' node so that multiple listeners can
     #run simultaneously.
     rospy.init_node('Control_Loop', anonymous=True)
-    rospy.Subscriber("Desidered_Position", UInt16MultiArray, executeLoop)
+    rospy.Subscriber("Desidered_Position", positionArray, executeLoop)
+    rospy.Subscriber("Estabilish_Connection1", UInt8, connection1)
 
 #Struct define and init ------------------------------------------------
 
@@ -145,13 +160,16 @@ ze = 0 #Value of real x coordinate
 
 q = [0,0,0]
 
+re = positionArray()
+
 #Global defines --------------------------------------------------------
 ACCEPTED_ERROR = pow(10,-5) #The error below which the control loop stops
 
 #Init ------------------------------------------------------------------
 CLnode_init()
-anglePublisher = rospy.Publisher("Final_Angle", UInt16MultiArray, queue_size = 18)
-rate = rospy.Rate(10000)
+anglePublisher = rospy.Publisher("Final_Angle", positionArray, queue_size = 18)
+receiverConnection = rospy.Publisher("Estabilish_Connection0", UInt8, queue_size = 10)
+rate = rospy.Rate(COMMUNICATION_FREQUENCY)
 
 #Main ------------------------------------------------------------------
 if __name__ == '__main__':
