@@ -4,8 +4,9 @@ import scipy
 import rospy
 from bulbabot.msg import positionArray
 from std_msgs.msg import UInt8
-from ServosConfiguration import COMMUNICATION_FREQUENCY
 from math import cos, sin, pi, pow
+
+import CommonFeatures
 
 #Class and functions definition ----------------------------------------
 ## DESCRIPTION: from the position gives the angular velocity in output through jacobian calculation 
@@ -30,6 +31,7 @@ def q_dotGenerator(q,ke):
 
 ## DESCRIPTION: Applying forward kinematics theory the real angle is converted into the real position coordinates
 def forwardKinematics(q):
+    global xe, ye, ze
     q1 = q[0]
     q2 = q[1]
     q3 = q[2]
@@ -43,13 +45,6 @@ def forwardKinematics(q):
     xe = T1[3]
     ye = T2[3]
     ze = T3[3]
-
-    rx = positionArray()
-    rx.x = xe
-    rx.y = ye
-    rx.z = ze
-
-    return rx
 
 ## DESCRIPTION: This function compute the error from the ideal angle obtained from Jacobian calculation
 def errorInvestigation(q_ideal_deg):
@@ -94,47 +89,52 @@ def positiveValueFilter(var):
     
 ## DESCRIPTION: Main program of the Control Loop executed as callback when an angle is published from another ROS node
 def executeLoop(rd):
-    xd = rd.data[0]
-    yd = rd.data[1]
-    zd = rd.data[2]
+    global xG, yG, zG, xe, ye, ze, q, foundAngles
+    xd = rd.x
+    yd = rd.y
+    zd = rd.z
     rospy.loginfo("Received position: [%d,%d,%d]",xd,yd,zd)
+    
+    re = rd #used to store the servo numbers
 
     #Evaluate the coordinate error and multiply it to its gain
     coordinateErr = [xd-xe,yd-ye,zd-ze]
-    while (coordinateErr[0] > ACCEPTED_ERROR and coordinateErr[1] > ACCEPTED_ERROR and coordinateErr[2] > ACCEPTED_ERROR):
+    while (abs(coordinateErr[0]) > ACCEPTED_ERROR and abs(coordinateErr[1]) > ACCEPTED_ERROR and abs(coordinateErr[2]) > ACCEPTED_ERROR):
+        print("sono dentro")
         ke = [xG*coordinateErr[1],yG*coordinateErr[2],zG*coordinateErr[3]]
     
         #Evaluate q_dot
         q_dot = q_dotGenerator(q,ke)
         rospy.loginfo("q_dot evaluated: [%d,%d,%d]",q_dot[0],q_dot[1],q_dot[2])
 
-        #Integrate q_dot to have q <=> -pi <= q <= pi
+        #Integrate q_dot to have q s.t. -pi <= q <= pi
         q_rad_double = scipy.integrate.simps(q_dot)
         if q_rad_double < -pi: 
             q_rad_double = -pi
         elif q_rad_double > pi: 
             q_rad_double = pi
 
-        #Find the value of the real reached angle in degrees
+        #Find the angle to be reached and publish it 
         q_deg_double = q_rad_double*180/pi
+        rospy.loginfo("q evaluated: [%d,%d,%d]",q_deg_double[0],q_deg_double[1],q_deg_double[2])
+        re.x = q_deg_double[0]
+        re.y = q_deg_double[1]
+        re.z = q_deg_double[2]
+        anglePublisher.publish(re)
+
+        #Find the value of the real reached angle in degrees
         q_real_deg = errorInvestigation(q_deg_double)
-        rospy.loginfo("q_real_deg evaluated: [%d,%d,%d]",q_real_deg[0],q_real_deg[1],q_real_deg[2])
 
         #Evaluate the reached angle in radiants
         q_real_rad = q_real_deg*pi/180
 
         #Evalaute the real reached position
-        re = forwardKinematics(q_real_rad)
-
-        anglePublisher.publish(re)
-        rospy.loginfo("Sent position: [%d,%d,%d]",re.x,re.y,re.z)
-        rate.sleep()
+        forwardKinematics(q_real_rad)
 
 def connection1(data):
-    if data.data == 1:
+    if data.data == CommonFeatures.MAIN_PROGRAM_ID:
         rospy.loginfo("Connected with Main Program succesfully")
-        receiverConnection.publish(int('0'))
-        rate.sleep()
+        receiverConnection.publish(CommonFeatures.CONTROL_LOOP_ID)
 
 ## DESCRIPTION: initialize ROS node and subscribing nodes and callback functions
 def CLnode_init():
@@ -143,9 +143,9 @@ def CLnode_init():
     #anonymous=True flag means that rospy will choose a unique
     #name for our 'listener' node so that multiple listeners can
     #run simultaneously.
-    rospy.init_node('Control_Loop', anonymous=True)
+    rospy.init_node('Control_Loop', anonymous=False)
     rospy.Subscriber("Desidered_Position", positionArray, executeLoop)
-    rospy.Subscriber("Estabilish_Connection1", UInt8, connection1)
+    rospy.Subscriber("Transmit_Connection", UInt8, connection1)
 
 #Struct define and init ------------------------------------------------
 
@@ -160,16 +160,13 @@ ze = 0 #Value of real x coordinate
 
 q = [0,0,0]
 
-re = positionArray()
-
 #Global defines --------------------------------------------------------
 ACCEPTED_ERROR = pow(10,-5) #The error below which the control loop stops
 
 #Init ------------------------------------------------------------------
 CLnode_init()
-anglePublisher = rospy.Publisher("Final_Angle", positionArray, queue_size = 18)
-receiverConnection = rospy.Publisher("Estabilish_Connection0", UInt8, queue_size = 10)
-rate = rospy.Rate(COMMUNICATION_FREQUENCY)
+anglePublisher = rospy.Publisher("Final_Angle", positionArray, queue_size = 1)
+receiverConnection = rospy.Publisher("Receive_Connection", UInt8, queue_size = 1)
 
 #Main ------------------------------------------------------------------
 if __name__ == '__main__':

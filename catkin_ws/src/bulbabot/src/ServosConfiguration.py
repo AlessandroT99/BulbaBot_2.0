@@ -76,11 +76,19 @@ def servoInit():
 	servoString = ""
 	for i in servoList:
 		servoString = servoString + str(i.pin) + ","
-	servoStart = 'sudo /home/ubuntu/servoblaster/servod --p1pins="%s" --pcm &' %servoString[:-1]
+	servoStart = 'echo "ubuntu" | sudo -S /home/ubuntu/servoblaster/servod --p1pins="%s" --pcm &' %servoString[:-1]
 	system(servoStart)
+	cmd = 'echo "ubuntu" | sudo -S chmod a=rwx /dev/servoblaster'
+	system(cmd)
 	sleep(2)
 	for i in servoList:
 		echoAngle(i,i.angle) #setting default position
+
+def servoFinding(servoSnum):
+	for i in servoList:
+		if i.snum == servoSnum:
+			return i
+	raise ValueError("Error in servoFinding function [ServosConfiguration.py] - The requested servo does not exist")
 
 #Struct define and init ------------------------------------------------
 #SX Legs
@@ -135,5 +143,3 @@ Leg_dxF = [dxSF,dxFF,dxTF]
 Leg_dxM = [dxSM,dxFM,dxTM]
 Leg_dxR = [dxSR,dxFR,dxTR]
 Side_dx = [Leg_dxF,Leg_dxM,Leg_dxR]
-
-COMMUNICATION_FREQUENCY = 10

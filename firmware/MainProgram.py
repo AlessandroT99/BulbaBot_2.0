@@ -111,7 +111,6 @@ if __name__ == '__main__':
 
 	elif WORKING:
 		print("Welcome user, BulbaBot 2.0 is awake, and ready to follow your instructions.\n")
-		rd = [189,139,-23]
-		rospy.loginfo(rd)
-		positionPublisher.publish(rd)
+		print("Position [189,138,-23] requested.")
+		positionPublisher.publish([189,139,-23])
 

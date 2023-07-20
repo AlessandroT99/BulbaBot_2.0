@@ -119,7 +119,6 @@ def executeLoop(rd):
         re = forwardKinematics(q_real_rad)
 
         anglePublisher.publish(re)
-        rospy.loginfo(re)
         rate.sleep()
 
 ## DESCRIPTION: initialize ROS node and subscribing nodes and callback functions

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from time import sleep
+from time import sleep, time
 from bulbabot.msg import positionArray
 from std_msgs.msg import UInt8
 from inspect import currentframe, getframeinfo
@@ -8,6 +8,7 @@ from inspect import currentframe, getframeinfo
 import rospy
 
 import ServosConfiguration
+import CommonFeatures
 
 #Class and functions definition ---------------------------------------- 
 ## DESCRIPTION: before starts the firmware, check the correct initialization of the working mode
@@ -20,17 +21,38 @@ def properWorkingMode():
 	
 ## DESCRIPTION: set the angle the gets back from the Control Loop execution for a single leg
 def publishAngles(data):
-	theta = [data.data[0],data.data[1],data.data[2]]
-	Leg = data.data[3]
+	theta = [data.x,data.y,data.z]
 	for i in len(theta):
-		ServosConfiguration.echoAngle(Leg[i], ServosConfiguration.angleConversion(theta[i]))
-		print("Set " + Leg[i].name + " at " + str(theta[i]) + " degrees")
+		legServo = ServosConfiguration.servoFinding(i)
+		ServosConfiguration.echoAngle(legServo, ServosConfiguration.angleConversion(theta[i]))
+		print("Set " + legServo.name + " at " + str(theta[i]) + " degrees")
 
-def connection0(data):
-	rospy.loginfo(str(data.data))
-	if data.data == 0:
-		connection = 1
-		rospy.loginfo("Connected with Control Loop succesfully")
+def passFunction(data):
+	global connect
+	connect = data.data
+
+def checkNodeConnection(nodeName,node,sender_id,receiver_id):
+	global connect, rate
+	rospy.Subscriber("Receive_Connection", UInt8, passFunction)
+	CommonFeatures.waitingPoints("\nContacting " + str(nodeName) + " node")
+	connect = 0
+	for i in range(1,CommonFeatures.NUMBER_OF_CONNECTION_TRIES):
+		if connect != 0:
+			break
+		CommonFeatures.waitingPoints("Connection attempt " + str(i))
+		node.publish(sender_id)
+		start_time = time()
+		while connect == 0: #if still no connection
+			if connect == 0:
+				elapsed_time = time()-start_time
+				if elapsed_time > CommonFeatures.CONNECTION_TIMEOUT:
+					if i == CommonFeatures.NUMBER_OF_CONNECTION_TRIES-1: #the last try
+						raise TimeoutError("Connection Error - Unable to reach " + str(nodeName) + " node")
+					else:
+						print("Connection attempt " + str(i) + " failed\n")
+						break
+	if connect == receiver_id:
+		print("Connected with " + str(nodeName) +  " succesfully\n")
 
 ## DESCRIPTION: initialize ROS node and subscribing nodes and callback functions
 def MPnode_init():
@@ -39,13 +61,17 @@ def MPnode_init():
     #anonymous=True flag means that rospy will choose a unique
     #name for our 'listener' node so that multiple listeners can
     #run simultaneously.
-    rospy.init_node('Main_Program', anonymous=True)
+    rospy.init_node('Main_Program', anonymous=False)
     rospy.Subscriber("Final_Angle", positionArray, publishAngles)
-    rospy.Subscriber("Estabilish_Connection0", UInt8, connection0)
+
+#Init ------------------------------------------------------------------
+MPnode_init()
+positionPublisher = rospy.Publisher("Desidered_Position", positionArray, queue_size = 1)
+trasmitterConnection = rospy.Publisher("Transmit_Connection", UInt8, queue_size = 1)
+rate = rospy.Rate(CommonFeatures.ROS_COMMUNICATION_FREQUENCY)
 
 #Global variable definition --------------------------------------------
 rd = positionArray()
-connection = 0
 
 #Global defines --------------------------------------------------------
 LINEINFO_workingMode = getframeinfo(currentframe())
@@ -54,12 +80,6 @@ KEYBOARD 		= 0 	#set manually an angle of a motor
 WORKING 		= 1		#working mode
 
 WORKING_MODES = {TIBIAS_DEBUG, KEYBOARD, WORKING}
-
-#Init ------------------------------------------------------------------
-MPnode_init()
-positionPublisher = rospy.Publisher("Desidered_Position", positionArray, queue_size = 18)
-transmitterConnection = rospy.Publisher("Estabilish_Connection1", UInt8, queue_size = 2)
-rate = rospy.Rate(round(ServosConfiguration.COMMUNICATION_FREQUENCY/10))
 
 #Main ------------------------------------------------------------------
 if __name__ == '__main__':
@@ -121,16 +141,26 @@ if __name__ == '__main__':
 
 	elif WORKING:
 		print("Welcome user, BulbaBot 2.0 is awake, and ready to follow your instructions.\n")
+		
+		CommonFeatures.waitingPoints("Waiting for nodes set up")
+		sleep(20)
+		CommonFeatures.waitingPoints("Checking nodes state")
+		try: 
+			checkNodeConnection("Control_Loop", trasmitterConnection, CommonFeatures.MAIN_PROGRAM_ID, CommonFeatures.CONTROL_LOOP_ID)
+		except TimeoutError as err: 
+			print(err)
+			exit(0)
+
 		rd.x = 189
 		rd.y = 139
 		rd.z = -23
-		connection = 0
-		rospy.loginfo("Contacting Control Loop...")
-		while ~connection: 
-			transmitterConnection.publish(int('1'))
-			rospy.loginfo("1")
-		while 1:
-			rospy.loginfo("Requested position: [%d,%d,%d]",rd.x,rd.y,rd.z)
-			positionPublisher.publish(rd)
-			rate.sleep()
-
+		rd.shoulderSnum = ServosConfiguration.dxSM.snum
+		rd.femurSnum = ServosConfiguration.dxFM.snum
+		rd.tibiaSnum = ServosConfiguration.dxTM.snum
+		print("Starting movement in 10s")
+		sleep(10)
+		#while 1:
+		rospy.loginfo("Requested position: [%d,%d,%d] for left middle leg",rd.x,rd.y,rd.z)
+		positionPublisher.publish(rd)
+		#	sleep(10)
+		rospy.spin()

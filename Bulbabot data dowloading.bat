@@ -1,6 +1,6 @@
 @echo off
 
-SET list=catkin_ws softwareTries
+SET list=catkin_ws softwareTries firmware
 
 ECHO Available folders for saving: 
 (FOR %%a IN (%list%) DO (
