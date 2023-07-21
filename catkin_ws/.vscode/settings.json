@@ -1,3 +1,4 @@
 {
-    "cmake.configureOnOpen": false
+    "cmake.configureOnOpen": false,
+    "cmake.sourceDirectory": "C:/Users/Alessandro/Documents/GitHub/BulbaBot2.0/catkin_ws/src/bulbabot"
 }

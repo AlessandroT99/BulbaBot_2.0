@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import scipy
+from scipy import integrate
 import rospy
 from bulbabot.msg import positionArray
 from std_msgs.msg import UInt8
@@ -11,9 +12,9 @@ import CommonFeatures
 #Class and functions definition ----------------------------------------
 ## DESCRIPTION: from the position gives the angular velocity in output through jacobian calculation 
 def q_dotGenerator(q,ke):
-    q1=q[1]
-    q2=q[2]
-    q3=q[3]
+    q1=q[0]
+    q2=q[1]
+    q3=q[2]
     
     #Jacobian computation
     J1 = [- (101*sin(q1))/2 - 160*sin(q3)*((4967757600021511*cos(q1)*cos(q2))/81129638414606681695789005144064 - sin(q1)*sin(q2)) - (710389336803076073*cos(q1)*sin(q2))/162259276829213363391578010288128 - (143*cos(q2)*sin(q1))/2 - 160*cos(q3)*((4967757600021511*cos(q1)*sin(q2))/81129638414606681695789005144064 + cos(q2)*sin(q1)), - 160*sin(q3)*(cos(q1)*cos(q2) - (4967757600021511*sin(q1)*sin(q2))/81129638414606681695789005144064) - (143*cos(q1)*sin(q2))/2 - (710389336803076073*cos(q2)*sin(q1))/162259276829213363391578010288128 - 160*cos(q3)*(cos(q1)*sin(q2) + (4967757600021511*cos(q2)*sin(q1))/81129638414606681695789005144064), - 160*sin(q3)*(cos(q1)*cos(q2) - (4967757600021511*sin(q1)*sin(q2))/81129638414606681695789005144064) - 160*cos(q3)*(cos(q1)*sin(q2) + (4967757600021511*cos(q2)*sin(q1))/81129638414606681695789005144064)]
@@ -22,9 +23,9 @@ def q_dotGenerator(q,ke):
  
     #Evaluation of the angular velocity
     #q_dot = J'*ke*e
-    q1_dot = J1[1]*ke[1]+J2[1]*ke[2]+J3[1]*ke[3]
-    q2_dot = J1[2]*ke[1]+J2[2]*ke[2]+J3[2]*ke[3]
-    q3_dot = J1[3]*ke[1]+J2[3]*ke[2]+J3[3]*ke[3]
+    q1_dot = J1[0]*ke[0]+J2[0]*ke[1]+J3[0]*ke[2]
+    q2_dot = J1[1]*ke[0]+J2[1]*ke[1]+J3[1]*ke[2]
+    q3_dot = J1[2]*ke[0]+J2[2]*ke[1]+J3[2]*ke[2]
     q_dot = [q1_dot,q2_dot,q3_dot]
     
     return q_dot
@@ -93,40 +94,42 @@ def executeLoop(rd):
     xd = rd.x
     yd = rd.y
     zd = rd.z
-    rospy.loginfo("Received position: [%d,%d,%d]",xd,yd,zd)
+    rospy.loginfo("Received position: [" + str(xd) + "," + str(yd) + "," + str(zd) + "]")
     
     re = rd #used to store the servo numbers
 
     #Evaluate the coordinate error and multiply it to its gain
     coordinateErr = [xd-xe,yd-ye,zd-ze]
     while (abs(coordinateErr[0]) > ACCEPTED_ERROR and abs(coordinateErr[1]) > ACCEPTED_ERROR and abs(coordinateErr[2]) > ACCEPTED_ERROR):
-        print("sono dentro")
-        ke = [xG*coordinateErr[1],yG*coordinateErr[2],zG*coordinateErr[3]]
+        ke = [xG*coordinateErr[0],yG*coordinateErr[1],zG*coordinateErr[2]]
     
         #Evaluate q_dot
         q_dot = q_dotGenerator(q,ke)
-        rospy.loginfo("q_dot evaluated: [%d,%d,%d]",q_dot[0],q_dot[1],q_dot[2])
+        rospy.loginfo("q_dot evaluated: [" + str(q_dot[0]) + "," + str(q_dot[1]) + "," + str(q_dot[2]) + "]")
 
         #Integrate q_dot to have q s.t. -pi <= q <= pi
-        q_rad_double = scipy.integrate.simps(q_dot)
-        if q_rad_double < -pi: 
-            q_rad_double = -pi
-        elif q_rad_double > pi: 
-            q_rad_double = pi
+        q_rad_double = [0,0,0]
+        for i in range(len(q_dot)):
+            q_rad_double[i] = scipy.integrate.simps(q_dot[i])
+            if q_rad_double[i] < -pi: 
+                q_rad_double[i] = -pi
+            elif q_rad_double[i] > pi: 
+                q_rad_double[i] = pi
 
         #Find the angle to be reached and publish it 
-        q_deg_double = q_rad_double*180/pi
-        rospy.loginfo("q evaluated: [%d,%d,%d]",q_deg_double[0],q_deg_double[1],q_deg_double[2])
-        re.x = q_deg_double[0]
-        re.y = q_deg_double[1]
-        re.z = q_deg_double[2]
+        re.x = q_rad_double[0]*180/pi
+        re.y = q_rad_double[1]*180/pi
+        re.z = q_rad_double[2]*180/pi
+        rospy.loginfo("q evaluated: [" + str(re.x) + "," + str(re.y) + "," + str(re.z) + "]")
         anglePublisher.publish(re)
 
         #Find the value of the real reached angle in degrees
-        q_real_deg = errorInvestigation(q_deg_double)
+        q_real_deg = errorInvestigation([re.x,re.y,re.z])
 
         #Evaluate the reached angle in radiants
-        q_real_rad = q_real_deg*pi/180
+        q_real_rad = [0,0,0]
+        for i in range(len(q_real_deg)):
+            q_real_rad[i] = q_real_deg[i]*pi/180
 
         #Evalaute the real reached position
         forwardKinematics(q_real_rad)
