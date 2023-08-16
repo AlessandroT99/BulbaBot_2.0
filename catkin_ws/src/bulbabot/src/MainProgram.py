@@ -22,7 +22,7 @@ def properWorkingMode():
 ## DESCRIPTION: set the angle the gets back from the Control Loop execution for a single leg
 def publishAngles(data):
 	theta = [data.x,data.y,data.z]
-	for i in len(theta):
+	for i in range(len(theta)):
 		legServo = ServosConfiguration.servoFinding(i)
 		ServosConfiguration.echoAngle(legServo, ServosConfiguration.angleConversion(theta[i]))
 		print("Set " + legServo.name + " at " + str(theta[i]) + " degrees")
@@ -157,8 +157,8 @@ if __name__ == '__main__':
 		rd.shoulderSnum = ServosConfiguration.dxSM.snum
 		rd.femurSnum = ServosConfiguration.dxFM.snum
 		rd.tibiaSnum = ServosConfiguration.dxTM.snum
-		print("Starting movement in 10s")
-		sleep(10)
+		print("Starting movement in 2s")
+		sleep(2)
 		#while 1:
 		rospy.loginfo("Requested position: [%d,%d,%d] for left middle leg",rd.x,rd.y,rd.z)
 		positionPublisher.publish(rd)

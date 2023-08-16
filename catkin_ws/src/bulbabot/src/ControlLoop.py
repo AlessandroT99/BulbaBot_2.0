@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
-import scipy
-from scipy import integrate
 import rospy
 from bulbabot.msg import positionArray
 from std_msgs.msg import UInt8
 from math import cos, sin, pi, pow
+from time import sleep
 
 import CommonFeatures
 
@@ -51,20 +50,20 @@ def forwardKinematics(q):
 def errorInvestigation(q_ideal_deg):
     #Procedure explained in simulink simulation
     q_real_deg = [0,0,0]
-    for i in len(q_ideal_deg):
+    for i in range(len(q_ideal_deg)):
         floatValue = q_ideal_deg[i]*10/9+50
         intValueNormalized = round(floatValue)/2000
         pwmPercentage = positiveValueFilter(intValueNormalized)
         meanVoltage = 3.3*pwmPercentage
-        potenziometerValue = 0.0825+round(q_ideal_deg)*0.00183
+        potenziometerValue = 0.0825+round(q_ideal_deg[i])*0.00183
         voltage_err = meanVoltage-potenziometerValue
         angle_err_deg = angleFinder(voltage_err)
-        q_real_deg[i] = q_ideal_deg-angle_err_deg
+        q_real_deg[i] = q_ideal_deg[i]-angle_err_deg
 
     return q_real_deg
 
 ## DESCRIPTION: The error in volts is converted into degrees
-def angleFinder(voltage_err,angle_err_deg):
+def angleFinder(voltage_err):
     #map voltage error from 0/3.3 V to 0/20 ms 
     pwm_dc_err = voltage_err*0.02/3.3
 
@@ -90,14 +89,17 @@ def positiveValueFilter(var):
     
 ## DESCRIPTION: Main program of the Control Loop executed as callback when an angle is published from another ROS node
 def executeLoop(rd):
-    global xG, yG, zG, xe, ye, ze, q, foundAngles
+    global xG, yG, zG, xe, ye, ze, q, re, foundAngles
     xd = rd.x
     yd = rd.y
     zd = rd.z
     rospy.loginfo("Received position: [" + str(xd) + "," + str(yd) + "," + str(zd) + "]")
     
-    re = rd #used to store the servo numbers
-
+    #store the servo numbers
+    re.shoulderSnum = rd.shoulderSnum
+    re.femurSnum = rd.femurSnum
+    re.tibiaSnum = rd.tibiaSnum
+    
     #Evaluate the coordinate error and multiply it to its gain
     coordinateErr = [xd-xe,yd-ye,zd-ze]
     while (abs(coordinateErr[0]) > ACCEPTED_ERROR and abs(coordinateErr[1]) > ACCEPTED_ERROR and abs(coordinateErr[2]) > ACCEPTED_ERROR):
@@ -105,23 +107,24 @@ def executeLoop(rd):
     
         #Evaluate q_dot
         q_dot = q_dotGenerator(q,ke)
-        rospy.loginfo("q_dot evaluated: [" + str(q_dot[0]) + "," + str(q_dot[1]) + "," + str(q_dot[2]) + "]")
+        #rospy.loginfo("q_dot evaluated: [" + str(q_dot[0]) + "," + str(q_dot[1]) + "," + str(q_dot[2]) + "]")
 
-        #Integrate q_dot to have q s.t. -pi <= q <= pi
+        #Integrate q_dot to have q s.t. -pi/2 <= q <= pi/2
         q_rad_double = [0,0,0]
         for i in range(len(q_dot)):
-            q_rad_double[i] = scipy.integrate.simps(q_dot[i])
-            if q_rad_double[i] < -pi: 
-                q_rad_double[i] = -pi
-            elif q_rad_double[i] > pi: 
-                q_rad_double[i] = pi
-
+            q_rad_double[i] = q[i] + q_dot[i]*integrationStep #integration
+            if q_rad_double[i] < -pi*0.5: 
+                q_rad_double[i] = -pi*0.5
+            elif q_rad_double[i] > pi*0.5: 
+                q_rad_double[i] = pi*0.5
+        
+        q = q_rad_double
+        
         #Find the angle to be reached and publish it 
-        re.x = q_rad_double[0]*180/pi
-        re.y = q_rad_double[1]*180/pi
-        re.z = q_rad_double[2]*180/pi
+        re.x = int((q[0]+pi*0.5)*180/pi)
+        re.y = int((q[1]+pi*0.5)*180/pi)
+        re.z = int((q[2]+pi*0.5)*180/pi)
         rospy.loginfo("q evaluated: [" + str(re.x) + "," + str(re.y) + "," + str(re.z) + "]")
-        anglePublisher.publish(re)
 
         #Find the value of the real reached angle in degrees
         q_real_deg = errorInvestigation([re.x,re.y,re.z])
@@ -133,6 +136,12 @@ def executeLoop(rd):
 
         #Evalaute the real reached position
         forwardKinematics(q_real_rad)
+        coordinateErr = [xd-xe,yd-ye,zd-ze]
+        rospy.loginfo("Error residual: [" + str(coordinateErr[0]) + "," + str(coordinateErr[1]) + "," + str(coordinateErr[2]) + "]\n")
+        sleep(1)
+
+    #The final angle has been obtained with an accectable error
+    anglePublisher.publish(re)
 
 def connection1(data):
     if data.data == CommonFeatures.MAIN_PROGRAM_ID:
@@ -165,6 +174,8 @@ q = [0,0,0]
 
 #Global defines --------------------------------------------------------
 ACCEPTED_ERROR = pow(10,-5) #The error below which the control loop stops
+re = positionArray()
+integrationStep = 0.01
 
 #Init ------------------------------------------------------------------
 CLnode_init()

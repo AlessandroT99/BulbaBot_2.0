@@ -41,7 +41,7 @@ do
 done
 printf "\n"
 
-#catkin build
+catkin build
 
 printf "\n\n"
 echo -n "---------- Awakening BulbaBot"
