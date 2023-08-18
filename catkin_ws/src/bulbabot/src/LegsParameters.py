@@ -1,59 +1,71 @@
 #!/usr/bin/env python3
 
-#Pins set as Pin Value #GPIO Value -------------------------------------
-#Pins number defined through the following code
-#Sx/Dx F(Front)/M(Middle)/R(Rear) _ shoulder/femur/tibia
-SxF_shoulder 	= 3     #2
-SxF_femur 	    = 8     #14
-SxF_tibia 	    = 10    #15
+# Pins set as Pin Value #GPIO Value -------------------------------------
+# Pins number defined through the following code
+# Sx/Dx F(Front)/M(Middle)/R(Rear) _ shoulder/femur/tibia
+SxF_shoulder 	= 3     # 2
+SxF_femur 	    = 8     # 14
+SxF_tibia 	    = 10    # 15
  
-SxM_shoulder	= 16    #18
-SxM_femur	    = 18    #24
-SxM_tibia 	    = 24    #8
+SxM_shoulder	= 16    # 18
+SxM_femur	    = 18    # 24
+SxM_tibia 	    = 24    # 8
 
-SxR_shoulder 	= 35    #19
-SxR_femur	    = 36    #16
-SxR_tibia 	    = 37    #26
+SxR_shoulder 	= 35    # 19
+SxR_femur	    = 36    # 16
+SxR_tibia 	    = 37    # 26
 
-DxF_shoulder 	= 5     #3
-DxF_femur	    = 7     #4
-DxF_tibia   	= 11    #17
+DxF_shoulder 	= 5     # 3
+DxF_femur	    = 7     # 4
+DxF_tibia   	= 11    # 17
 
-DxM_shoulder  	= 13    #27
-DxM_femur	    = 15    #22
-DxM_tibia 	    = 19    #10
+DxM_shoulder  	= 13    # 27
+DxM_femur	    = 15    # 22
+DxM_tibia 	    = 19    # 10
 
-DxR_shoulder 	= 21    #9
-DxR_femur	    = 23    #11
-DxR_tibia 	    = 29    #5
+DxR_shoulder 	= 21    # 9
+DxR_femur	    = 23    # 11
+DxR_tibia 	    = 29    # 5
 
-#Legs admitted angles --------------------------------------------------
-SX_MAX_TIBIA        = 0     #raise
-SX_MIN_TIBIA        = 180   #lowest position
-SX_DEFAULT_TIBIA    = 150   #default angle
+# Legs admitted angles --------------------------------------------------
+SX_MAX_TIBIA        = 0     # Raise
+SX_MIN_TIBIA        = 180   # Lowest position
+SX_DEFAULT_TIBIA    = 150   # Default angle
 
-SX_MAX_FEMUR        = 50    #raise
-SX_MIN_FEMUR        = 180   #lowest position
-SX_DEFAULT_FEMUR    = 70    #default angle
+SX_MAX_FEMUR        = 50    # Raise
+SX_MIN_FEMUR        = 180   # Lowest position
+SX_DEFAULT_FEMUR    = 70    # Default angle
 
-SX_MAX_SHOULDER     = 180   #towards the head
-SX_MIN_SHOULDER     = 50     #behind the head
-SX_DEFAULT_SHOULDER = 110    #default angle
+SX_MAX_SHOULDER     = 180   # Towards the head
+SX_MIN_SHOULDER     = 50    # Behind the head
+SX_DEFAULT_SHOULDER = 110   # Default angle
 
-DX_MAX_TIBIA        = 180   #raise
-DX_MIN_TIBIA        = 0     #lowest position
-DX_DEFAULT_TIBIA    = 30    #default angle
+DX_MAX_TIBIA        = 180   # Raise
+DX_MIN_TIBIA        = 0     # Lowest position
+DX_DEFAULT_TIBIA    = 30    # Default angle
 
-DX_MAX_FEMUR        = 130   #raise
-DX_MIN_FEMUR        = 0     #lowest position
-DX_DEFAULT_FEMUR    = 110   #default angle
+DX_MAX_FEMUR        = 130   # Raise
+DX_MIN_FEMUR        = 0     # Lowest position
+DX_DEFAULT_FEMUR    = 110   # Default angle
 
-DX_MAX_SHOULDER     = 40    #towards the head
-DX_MIN_SHOULDER     = 170   #behind the head
-DX_DEFAULT_SHOULDER = 120   #default angle
+DX_MAX_SHOULDER     = 40    # Towards the head
+DX_MIN_SHOULDER     = 170   # Behind the head
+DX_DEFAULT_SHOULDER = 120   # Default angle
 
-## DEFINITION: checks the constraints fullfillness for the angle requested
 def angleCheck(side, part, angle):
+    """
+    angleCheck()
+    -------------------
+    Checks the constraints fullfillness for the angle requested.
+    
+    ### INPUTS
+    * `side`: leg's side of the robot.
+    * `part`: part of the leg of the robot.
+    * `angle`: angle to reach for the servo.
+    ### OUTPUTS
+    * none.
+    """
+
     if side=="Sx":
         if part=="Shoulder":
             if SX_MIN_SHOULDER>angle or SX_MAX_SHOULDER<angle: 
@@ -81,8 +93,19 @@ def angleCheck(side, part, angle):
     else:
         raise ValueError("Side not recognised - Error in InitialConfiguration.py - def echoAngle()")
 
-## DEFINITION: returns the default value of the leg part chosen 
 def defaultValue(pin):
+    """
+    defaultValue()
+    -------------------
+    Returns the default value of the leg part chosen.     
+    
+    ### INPUTS
+    * `pin`: servoBlaster number of the chosen servo.
+    ### OUTPUTS
+    * [not explicit] defaultAngle: depending on the servo, it returns a different \
+    default angle. 
+    """
+
     if 0<= pin <=2:
         return SX_DEFAULT_TIBIA
     elif 3<= pin <=5:

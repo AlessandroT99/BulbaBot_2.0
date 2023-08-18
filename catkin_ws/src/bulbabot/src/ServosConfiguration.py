@@ -5,12 +5,12 @@ from os import system
 
 import LegsParameters
 
-#Global defines --------------------------------------------------------
-VELOCITY			= 1		#set a non default velocity for the motors movements
-VELOCITY_WAIT 		= 0.1	#set a default value for sleep time in velocity alghoritm
-VELOCITY_DEFAULT 	= 1		#value of default velocity of the servos
+# Global defines --------------------------------------------------------
+VELOCITY			= 1		# Set a non default velocity for the motors movements
+VELOCITY_WAIT 		= 0.1	# Set a default value for sleep time in velocity alghoritm
+VELOCITY_DEFAULT 	= 1		# Value of default velocity of the servos
 
-#Class and functions definition ---------------------------------------- 
+# Class and functions definition ---------------------------------------- 
 class stru:
 	def __init__(self):
 		self.pin = 0
@@ -18,43 +18,86 @@ class stru:
 		self.angle = 0
 		self.name = ""
 
-## DESCRIPTION: maps from 0-180 grades to 50-250 time period
 def angleConversion(alpha):
+	"""
+    angleConversion()
+    -------------------
+    Maps from 0-180 grades to 50-250 time period.
+    
+    ### INPUTS
+    * `alpha`: angle in degrees.
+    ### OUTPUTS
+    * `processedValue`: angle value properly setted for servoBlaster commands.
+    """
+
 	if int(alpha)>180 or int(alpha)<0:
 		raise TypeError("Only degrees values between 0 and 180 are allowed")
-	return round(float(alpha)*10/9+50)
+	processedValue = round(float(alpha)*10/9+50)
+	return processedValue 
 
-## DESCRIPTION: check correctness of the angle and the publish it to the servoBlaster manager
 def echoAngle(localServo,newAngle,velocity=VELOCITY_DEFAULT):
+	"""
+    echoAngle()
+    -------------------
+    Check correctness of the angle and the publish it to the servoBlaster manager.
+    
+    ### INPUTS
+    * `localServo`: the data of the selected servo as struct `stru()`. 
+    * `newAngle`: the angle to reach from the servo.
+    * `velocity`: the velocity of the movements.
+    ### OUTPUTS
+    * [not explicit] 1 or 0: results of the function.
+    1 if succesfull, 0 if failed. 
+    """
+
+	#FIXME: the velocity control does not work as expected
+	#  		the servos lags too much
+
 	try:
 		localServoName = localServo.name.split()
 		LegsParameters.angleCheck(localServoName[0],localServoName[2],newAngle)
-		if velocity > VELOCITY_DEFAULT: #if velocity is setted
+		if velocity > VELOCITY_DEFAULT: # If velocity is setted
 			velocityExecution(localServo,newAngle,velocity)
-		elif velocity < VELOCITY_DEFAULT: #velocity input error
+		elif velocity < VELOCITY_DEFAULT: # Velocity input error
 			raise ValueError("Velocity cannot be negative.")
-		else: #default velocity as fast as possibile
+		else: # Default velocity as fast as possibile
 			localServo.angle = newAngle
 			cmd = "echo %s" %localServo.snum + "=%s > /dev/servoblaster" %localServo.angle 
 			system(cmd)
-		return 1 #operation goes in the right way
+		return 1 # Operation goes in the right way
 	except Exception as err:
 		print(err)
-		return 0 #an error as been found
+		return 0 # An error as been found
 	
-## DESCRIPTION: varies the velocity of the movement if a different value from VELOCITY_DEFAULT is chosen
 def velocityExecution(localServo,newAngle,velocity):
-	frameSteps = abs(round((newAngle-localServo.angle)/velocity)) #divide path space into "velocity" steps
-	if localServo.angle <= newAngle: #if the new angle is higher it has to be done a summation 
-		while localServo.angle != newAngle: #repeat until the steps are over
+	"""
+    velocityExecution()
+    -------------------
+    Varies the velocity of the movement if a different value 
+	from VELOCITY_DEFAULT is chosen.
+    
+    ### INPUTS
+    * `localServo`: the data of the selected servo as struct `stru()`. 
+    * `newAngle`: the angle to reach from the servo.
+    * `velocity`: the velocity of the movements.
+    ### OUTPUTS
+    * none.
+    """
+
+	# Divide path space into "velocity" steps
+	frameSteps = abs(round((newAngle-localServo.angle)/velocity))
+
+	# If the new angle is higher it has to be done a summation 
+	if localServo.angle <= newAngle:  
+		while localServo.angle != newAngle: # Repeat until the steps are over
 			localServo.angle += frameSteps
 			if localServo.angle > newAngle: 
 				localServo.angle = newAngle
 			cmd = "echo %s" %localServo.snum + "=%s > /dev/servoblaster" %localServo.angle
 			system(cmd)
 			sleep(VELOCITY_WAIT)
-	else: #if the new angle is lower it has to be done a substraction
-		while localServo.angle != newAngle: #repeat until the steps are over
+	else: # If the new angle is lower it has to be done a substraction
+		while localServo.angle != newAngle: # Repeat until the steps are over
 			localServo.angle -= frameSteps
 			if localServo.angle < newAngle: 
 				localServo.angle = newAngle
@@ -62,8 +105,18 @@ def velocityExecution(localServo,newAngle,velocity):
 			system(cmd)
 			sleep(VELOCITY_WAIT)
 		
-## DESCRIPTION: print a table which contains all the servos and affiliated infos
 def infoTable():
+	"""
+    ()
+    -------------------
+    Print a table which contains all the servos and affiliated infos.
+    
+    ### INPUTS
+    * none.
+    ### OUTPUTS
+    * none.
+    """
+
 	print("\n")
 	print(' List of all the servos '.center(44,'-'))
 	print("{:<14} {:<22} {:<8}".format('Servo number','Servo Name','HW Pin'))
@@ -71,8 +124,18 @@ def infoTable():
 		print("{:<14} {:<22} {:<8}".format(k.snum,k.name,k.pin))
 	print(''.center(44,'-'))
 
-## DESCRIPTION: initialization of the servos pins and setting the default positions
 def servoInit():
+	"""
+    ()
+    -------------------
+	Initialization of the servos pins and setting the default positions.
+    
+    ### INPUTS
+    * none.
+    ### OUTPUTS
+    * none.
+    """
+
 	servoString = ""
 	for i in servoList:
 		servoString = servoString + str(i.pin) + ","
@@ -82,16 +145,28 @@ def servoInit():
 	system(cmd)
 	sleep(2)
 	for i in servoList:
-		echoAngle(i,i.angle) #setting default position
+		echoAngle(i,i.angle) # Setting default position
 
 def servoFinding(servoSnum):
+	"""
+    servoFinding()
+    -------------------
+    Finds the number of the servos in the servoblaster list.
+    
+    ### INPUTS
+    * `servoSnum`: number of the servo to check.
+    ### OUTPUTS
+    * [not explicit] `i`:returning the servos servoBlaster identification number 
+	if exist.
+    """
+
 	for i in servoList:
 		if i.snum == servoSnum:
 			return i
 	raise ValueError("Error in servoFinding function [ServosConfiguration.py] - The requested servo does not exist")
 
-#Struct define and init ------------------------------------------------
-#SX Legs
+# Struct define and init ------------------------------------------------
+# SX Legs
 sxTF = stru(); sxTF.name = "Sx Front Tibia"; sxTF.pin = LegsParameters.SxF_tibia
 sxTF.snum = 0; sxTF.angle = angleConversion(LegsParameters.SX_DEFAULT_TIBIA)
 sxTM = stru(); sxTM.name = "Sx Middle Tibia"; sxTM.pin = LegsParameters.SxM_tibia
@@ -111,7 +186,7 @@ sxSM.snum = 7; sxSM.angle = angleConversion(LegsParameters.SX_DEFAULT_SHOULDER)
 sxSR = stru(); sxSR.name = "Sx Rear Shoulder"; sxSR.pin = LegsParameters.SxR_shoulder
 sxSR.snum = 8; sxSR.angle = angleConversion(LegsParameters.SX_DEFAULT_SHOULDER)
 
-#DX Legs
+# DX Legs
 dxTF = stru(); dxTF.name = "Dx Front Tibia"; dxTF.pin = LegsParameters.DxF_tibia 
 dxTF.snum = 9; dxTF.angle = angleConversion(LegsParameters.DX_DEFAULT_TIBIA)
 dxTM = stru(); dxTM.name = "Dx Middle Tibia"; dxTM.pin = LegsParameters.DxM_tibia
