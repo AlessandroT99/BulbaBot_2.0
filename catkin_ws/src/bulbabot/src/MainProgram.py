@@ -47,7 +47,7 @@ def publishAngles(data):
 	for i in range(len(theta)):
 		legServo = ServosConfiguration.servoFinding(i)
 		ServosConfiguration.echoAngle(legServo, ServosConfiguration.angleConversion(theta[i]))
-		print("Set " + legServo.name + " at " + str(theta[i]) + " degrees")
+		print(f"Set {legServo.name} at {str(theta[i])} degrees")
 
 def passFunction(data):
 	"""
@@ -83,12 +83,12 @@ def checkNodeConnection(nodeName,node,sender_id,receiver_id):
 
 	global connect, rate
 	rospy.Subscriber("Receive_Connection", UInt8, passFunction)
-	CommonFeatures.waitingPoints("\nContacting " + str(nodeName) + " node")
+	CommonFeatures.waitingPoints(f"\nContacting {str(nodeName)} node")
 	connect = 0
 	for i in range(1,CommonFeatures.NUMBER_OF_CONNECTION_TRIES):
 		if connect != 0:
 			break
-		CommonFeatures.waitingPoints("Connection attempt " + str(i))
+		CommonFeatures.waitingPoints(f"Connection attempt {str(i)}")
 		node.publish(sender_id)
 		start_time = time()
 		while connect == 0: # If still no connection
@@ -96,12 +96,12 @@ def checkNodeConnection(nodeName,node,sender_id,receiver_id):
 				elapsed_time = time()-start_time
 				if elapsed_time > CommonFeatures.CONNECTION_TIMEOUT:
 					if i == CommonFeatures.NUMBER_OF_CONNECTION_TRIES-1: # The last try
-						raise TimeoutError("Connection Error - Unable to reach " + str(nodeName) + " node")
+						raise TimeoutError(f"Connection Error - Unable to reach {str(nodeName)} node")
 					else:
-						print("Connection attempt " + str(i) + " failed\n")
+						print(f"Connection attempt {str(i)} failed\n")
 						break
 	if connect == receiver_id:
-		print("Connected with " + str(nodeName) +  " succesfully\n")
+		rospy.loginfo(f"Connected with {str(nodeName)} succesfully\n")
  
 def MPnode_init():
     """
@@ -191,7 +191,6 @@ if __name__ == '__main__':
 						# Proceed to update angle value only if the movement is completed
 						if ServosConfiguration.echoAngle(k,ServosConfiguration.angleConversion(newAngle),velocity): 
 							k.angle = int(newAngle)
-							print("Changing " + k.name + " angle into " + str(k.angle) + " degrees")
 							print(f"Changing {k.name} angle into  {str(k.angle)} degrees")
 						break
 			else: 
@@ -202,8 +201,6 @@ if __name__ == '__main__':
 		
 
 	elif WORKING:
-		print("Welcome user, BulbaBot 2.0 is awake, and ready to follow your instructions.\n")
-		
 		CommonFeatures.waitingPoints("Waiting for nodes set up")
 		sleep(20)
 		CommonFeatures.waitingPoints("Checking nodes state")
@@ -213,13 +210,15 @@ if __name__ == '__main__':
 			print(err)
 			exit(0)
 
+		print("Welcome user, BulbaBot 2.0 is awake, and ready to follow your instructions.\n")
+
 		rd.x = 189
-		rd.y = 139
+		rd.y = 130
 		rd.z = -23
 		rd.shoulderSnum = ServosConfiguration.dxSM.snum
 		rd.femurSnum = ServosConfiguration.dxFM.snum
 		rd.tibiaSnum = ServosConfiguration.dxTM.snum
-		print("Starting movement in 2s")
+		CommonFeatures.waitingPoints("Starting movement in 2s")
 		sleep(2)
 		rospy.loginfo("Requested position: [%d,%d,%d] for left middle leg",rd.x,rd.y,rd.z)
 		positionPublisher.publish(rd)

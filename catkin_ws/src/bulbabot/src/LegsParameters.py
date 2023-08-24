@@ -69,25 +69,25 @@ def angleCheck(side, part, angle):
     if side=="Sx":
         if part=="Shoulder":
             if SX_MIN_SHOULDER>angle or SX_MAX_SHOULDER<angle: 
-                TypeError("The angle has to be between " + str(SX_MIN_SHOULDER) + " and " + str(SX_MAX_SHOULDER))
+                TypeError(f"The angle has to be between {str(SX_MIN_SHOULDER)} and {str(SX_MAX_SHOULDER)}")
         elif part=="Femur":
             if SX_MIN_FEMUR<angle or SX_MAX_FEMUR>angle: 
-                TypeError("The angle has to be between " + str(SX_MIN_FEMUR) + " and " + str(SX_MAX_FEMUR))
+                TypeError(f"The angle has to be between {str(SX_MIN_FEMUR)} and {str(SX_MAX_FEMUR)}")
         elif part=="Tibia":
             if SX_MIN_TIBIA<angle or SX_MAX_TIBIA>angle: 
-                TypeError("The angle has to be between " + str(SX_MIN_TIBIA) + " and " + str(SX_MAX_TIBIA))
+                TypeError(f"The angle has to be between {str(SX_MIN_TIBIA)} and {str(SX_MAX_TIBIA)}")
         else:
             raise ValueError("Part not recognised - Error in InitialConfiguration.py - def echoAngle()")
     elif side=="Dx":
         if part=="Shoulder":
             if DX_MIN_SHOULDER<angle or DX_MAX_SHOULDER>angle: 
-                TypeError("The angle has to be between " + str(DX_MIN_SHOULDER) + " and " + str(DX_MAX_SHOULDER))
+                TypeError(f"The angle has to be between {str(DX_MIN_SHOULDER)} and {str(DX_MAX_SHOULDER)}")
         elif part=="Femur":
             if DX_MIN_FEMUR>angle or DX_MAX_FEMUR<angle: 
-                TypeError("The angle has to be between " + str(DX_MIN_FEMUR) + " and " + str(DX_MAX_FEMUR))
+                TypeError(f"The angle has to be between {str(DX_MIN_FEMUR)} and {str(DX_MAX_FEMUR)}")
         elif part=="Tibia":
             if DX_MIN_TIBIA>angle or DX_MAX_TIBIA<angle: 
-                TypeError("The angle has to be between " + str(DX_MIN_TIBIA) + " and " + str(DX_MAX_TIBIA))
+                TypeError(f"The angle has to be between {str(DX_MIN_TIBIA)} and {str(DX_MAX_TIBIA)}")
         else:
             raise ValueError("Part not recognised - Error in InitialConfiguration.py - def echoAngle()")
     else:

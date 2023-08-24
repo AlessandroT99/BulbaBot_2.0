@@ -46,7 +46,7 @@ def echoAngle(localServo,newAngle,velocity=VELOCITY_DEFAULT):
     * `newAngle`: the angle to reach from the servo.
     * `velocity`: the velocity of the movements.
     ### OUTPUTS
-    * [not explicit] 1 or 0: results of the function.
+    * [not explicit] 1 or 0: results of the function. \
     1 if succesfull, 0 if failed. 
     """
 
@@ -73,7 +73,7 @@ def velocityExecution(localServo,newAngle,velocity):
 	"""
     velocityExecution()
     -------------------
-    Varies the velocity of the movement if a different value 
+    Varies the velocity of the movement if a different value \
 	from VELOCITY_DEFAULT is chosen.
     
     ### INPUTS
@@ -156,7 +156,7 @@ def servoFinding(servoSnum):
     ### INPUTS
     * `servoSnum`: number of the servo to check.
     ### OUTPUTS
-    * [not explicit] `i`:returning the servos servoBlaster identification number 
+    * [not explicit] `i`:returning the servos servoBlaster identification number \
 	if exist.
     """
 

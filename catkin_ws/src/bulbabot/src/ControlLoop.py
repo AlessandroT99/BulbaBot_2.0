@@ -13,11 +13,11 @@ def q_dotGenerator(q,ke):
     """
     q_dotGenerator()
     -------------------
-    From the position gives the angular velocity in output through 
+    From the position gives the angular velocity in output through \
     jacobian calculation. 
 
     ### INPUTS
-    * `q`: the difference angle to make in order to reach the desidered
+    * `q`: the difference angle to make in order to reach the desidered \
     position.
     * `ke`: the gain of the controller for the error.
     ### OUTPUTS
@@ -46,7 +46,7 @@ def forwardKinematics(q):
     """
     forwardKinematics()
     -------------------
-    Applying forward kinematics theory the real angle is converted 
+    Applying forward kinematics theory the real angle is converted \
     into the real position coordinates.
     
     ### INPUTS
@@ -76,8 +76,8 @@ def errorInvestigation(q_ideal_deg):
     """
     errorInvestigation()
     -------------------
-    This function compute the error from the ideal angle obtained 
-    from Jacobian calculation.
+    This function compute the error from the ideal angle obtained \
+    from Jacobian calculation. \
     Procedure explained in details simulink simulation.
     
     ### INPUTS
@@ -106,7 +106,7 @@ def angleFinder(voltage_err):
     The error in volts is converted into degrees.
     
     ### INPUTS
-    * `voltage_err`: voltage error incoming from the difference
+    * `voltage_err`: voltage error incoming from the difference \
     of the mean PWM signal and the potenziometer read.
     ### OUTPUTS
     * `angle_err_degree`: the resulting expected error in degrees of the servos.
@@ -149,13 +149,13 @@ def executeLoop(rd):
     """
     executeLoop()
     -------------------
-    Main program of the Control Loop executed as callback when an angle is published 
+    Main program of the Control Loop executed as callback when an angle is published \
     from another ROS node.
 
     ### INPUTS
     * `rd`: the desidered coordinates of the selected end effector.
     ### OUTPUTS
-    * none
+    * none.
     """
 
     global xG, yG, zG, xe, ye, ze, q, re, foundAngles
@@ -171,9 +171,20 @@ def executeLoop(rd):
     
     # Evaluate the coordinate error and multiply it to its gain
     coordinateErr = [xd-xe,yd-ye,zd-ze]
-    while (abs(coordinateErr[0]) > ACCEPTED_ERROR and abs(coordinateErr[1]) > ACCEPTED_ERROR and abs(coordinateErr[2]) > ACCEPTED_ERROR):
-        ke = [xG*coordinateErr[0],yG*coordinateErr[1],zG*coordinateErr[2]]
     
+    # Preparing monitor for printing variables for debugging
+    if DEBUG_VALUE_PRINTING == 1:
+            loopCounter = 0 # Number used to take trace of the number of loop cycles
+            print("\n\n")
+            print(" DEBUGGING MONITOR STARTED ".center(80,'-'))
+            print("\n")
+
+    while (abs(coordinateErr[0]) > ACCEPTED_ERROR \
+           and abs(coordinateErr[1]) > ACCEPTED_ERROR \
+            and abs(coordinateErr[2]) > ACCEPTED_ERROR):
+        
+        ke = [xG*coordinateErr[0],yG*coordinateErr[1],zG*coordinateErr[2]]
+
         # Evaluate q_dot
         q_dot = q_dotGenerator(q,ke)
         #rospy.loginfo("q_dot evaluated: [" + str(q_dot[0]) + "," + str(q_dot[1]) + "," + str(q_dot[2]) + "]")
@@ -193,7 +204,7 @@ def executeLoop(rd):
         re.x = int((q[0]+pi*0.5)*180/pi)
         re.y = int((q[1]+pi*0.5)*180/pi)
         re.z = int((q[2]+pi*0.5)*180/pi)
-        rospy.loginfo("q evaluated: [" + str(re.x) + "," + str(re.y) + "," + str(re.z) + "]")
+        #rospy.loginfo("q evaluated: [" + str(re.x) + "," + str(re.y) + "," + str(re.z) + "]")
 
         # Find the value of the real reached angle in degrees
         q_real_deg = errorInvestigation([re.x,re.y,re.z])
@@ -203,10 +214,27 @@ def executeLoop(rd):
         for i in range(len(q_real_deg)):
             q_real_rad[i] = q_real_deg[i]*pi/180
 
-        # Evalaute the real reached position
+        # Evaluate the real reached position
         forwardKinematics(q_real_rad)
+
+        # Printing variables for debugging
+        if DEBUG_VALUE_PRINTING == 1:
+            loopCounter += 1 # Increment the number of control loops made
+            print(f" CONTROL LOOP FOR [{xd:.2f},{yd:.2f},{zd:.2f}] - t = {str(integrationStep*loopCounter)} ".center(80,'-'))
+            print(f"e = rd-re = [{coordinateErr[0]:.2f},{coordinateErr[1]:.2f},{coordinateErr[2]:.2f}]")
+            print(f"q_dot = [{q_dot[0]:.2f},{q_dot[1]:.2f},{q_dot[2]:.2f}]")
+            print(f"q = [{q[0]:.2f},{q[1]:.2f},{q[2]:.2f}]")
+            print(f"q_deg_double = [{re.x:.2f},{re.y:.2f},{re.z:.2f}]")
+            print(f"q_real_rad = [{q_real_rad[0]:.2f},{q_real_rad[1]:.2f},{q_real_rad[2]:.2f}]")
+            print(f"re = [{xe:.2f},{ye:.2f},{ze:.2f}]")
+            print("".center(80,'-'))
+            print("\n")
+            sleep(2)
+
+        # Evaluate the current error from the desidered position
         coordinateErr = [xd-xe,yd-ye,zd-ze]
-        rospy.loginfo("Error residual: [" + str(coordinateErr[0]) + "," + str(coordinateErr[1]) + "," + str(coordinateErr[2]) + "]\n")
+        #rospy.loginfo("Error residual: [" + str(coordinateErr[0]) + "," + str(coordinateErr[1]) + "," + str(coordinateErr[2]) + "]\n")
+
         sleep(1)
 
     # The final angle has been obtained with an accectable error
@@ -216,14 +244,14 @@ def connection1(data):
     """
     connection1()
     -------------------
-    A function that answers to MainProgram.py publisher for successfull 
-    initial connection.
+    A function that answers to MainProgram.py publisher for successfull \
+    initial connection. \
     Is it runned only during the starting process.
     
     ### INPUTS
     * `data`: corresponding to the data imported from the ROS node.
     ### OUTPUTS
-    * none
+    * none.
     """
 
     if data.data == CommonFeatures.MAIN_PROGRAM_ID:
@@ -236,16 +264,16 @@ def CLnode_init():
     -------------------
     Initialize ROS node and subscribing nodes and callback functions.    
     
-    In ROS, nodes are uniquely named. If two nodes with the same
-    name are launched, the previous one is kicked off. The
-    anonymous=True flag means that rospy will choose a unique
-    name for our 'listener' node so that multiple listeners can
+    In ROS, nodes are uniquely named. If two nodes with the same \
+    name are launched, the previous one is kicked off. The \
+    anonymous=True flag means that rospy will choose a unique \
+    name for our 'listener' node so that multiple listeners can \
     run simultaneously.
 
     ### INPUTS
-    * none
+    * none.
     ### OUTPUTS
-    * none
+    * none.
     """
     
     rospy.init_node('Control_Loop', anonymous=False)
@@ -264,6 +292,8 @@ ye = 0 # Value of real x coordinate
 ze = 0 # Value of real x coordinate
 
 q = [0,0,0]
+
+DEBUG_VALUE_PRINTING = 1 # Print a series of variables usefull for control loop debug
 
 # Global defines --------------------------------------------------------
 ACCEPTED_ERROR = pow(10,-5) # The error below which the control loop stops
