@@ -44,8 +44,10 @@ def publishAngles(data):
     """
     
 	theta = [data.x,data.y,data.z]
-	for i in range(len(theta)):
-		legServo = ServosConfiguration.servoFinding(i)
+	snums = [data.shoulderSnum, data.femurSnum, data.tibiaSnum]
+	rospy.loginfo(f"Received angles: [{str(data.x)},{str(data.y)},{str(data.z)}]")
+	for i in range(len(snums)):
+		legServo = ServosConfiguration.servoFinding(snums[i])
 		ServosConfiguration.echoAngle(legServo, ServosConfiguration.angleConversion(theta[i]))
 		print(f"Set {legServo.name} at {str(theta[i])} degrees")
 

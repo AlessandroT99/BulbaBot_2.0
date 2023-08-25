@@ -162,7 +162,7 @@ def executeLoop(rd):
     xd = rd.x
     yd = rd.y
     zd = rd.z
-    rospy.loginfo("Received position: [" + str(xd) + "," + str(yd) + "," + str(zd) + "]")
+    rospy.loginfo(f"Received position: [{str(xd)},{str(yd)},{str(zd)}]")
     
     # Store the servo numbers
     re.shoulderSnum = rd.shoulderSnum
@@ -189,21 +189,30 @@ def executeLoop(rd):
         q_dot = q_dotGenerator(q,ke)
         #rospy.loginfo("q_dot evaluated: [" + str(q_dot[0]) + "," + str(q_dot[1]) + "," + str(q_dot[2]) + "]")
 
-        # Integrate q_dot to have q s.t. -pi/2 <= q <= pi/2
+        # Integrate q_dot to have q s.t. -pi <= q <= pi
         q_rad_double = [0,0,0]
-        for i in range(len(q_dot)):
-            q_rad_double[i] = q[i] + q_dot[i]*integrationStep # integration
-            if q_rad_double[i] < -pi*0.5: 
-                q_rad_double[i] = -pi*0.5
-            elif q_rad_double[i] > pi*0.5: 
-                q_rad_double[i] = pi*0.5
+
+        # If we are at the first iteration
+        if (coordinateErr[0] == xd \
+            and coordinateErr[1] == yd \
+             and coordinateErr[2] == zd): 
+            q = [0,0,0]
         
-        q = q_rad_double
+        # If we are in the normal working procedures
+        else:
+            for i in range(len(q_dot)):
+                q_rad_double[i] = q[i] + q_dot[i]*integrationStep # Integration
+                if q_rad_double[i] < -pi*0.5: 
+                    q_rad_double[i] = -pi*0.5
+                elif q_rad_double[i] > pi*0.5: 
+                    q_rad_double[i] = pi*0.5
+
+            q = q_rad_double
         
         # Find the angle to be reached and publish it 
-        re.x = int((q[0]+pi*0.5)*180/pi)
-        re.y = int((q[1]+pi*0.5)*180/pi)
-        re.z = int((q[2]+pi*0.5)*180/pi)
+        re.x = int((q[0])*180/pi)
+        re.y = int((q[1])*180/pi)
+        re.z = int((q[2])*180/pi)
         #rospy.loginfo("q evaluated: [" + str(re.x) + "," + str(re.y) + "," + str(re.z) + "]")
 
         # Find the value of the real reached angle in degrees
@@ -220,8 +229,9 @@ def executeLoop(rd):
         # Printing variables for debugging
         if DEBUG_VALUE_PRINTING == 1:
             loopCounter += 1 # Increment the number of control loops made
-            print(f" CONTROL LOOP FOR [{xd:.2f},{yd:.2f},{zd:.2f}] - t = {str(integrationStep*loopCounter)} ".center(80,'-'))
-            print(f"e = rd-re = [{coordinateErr[0]:.2f},{coordinateErr[1]:.2f},{coordinateErr[2]:.2f}]")
+            timePassed = integrationStep*(loopCounter-1)
+            print(f" CONTROL LOOP FOR [{xd:.2f},{yd:.2f},{zd:.2f}] - t = {timePassed:.3f} s ".center(80,'-'))
+            print(f"e = rd-re = [{coordinateErr[0]:.6f},{coordinateErr[1]:.6f},{coordinateErr[2]:.6f}]")
             print(f"q_dot = [{q_dot[0]:.2f},{q_dot[1]:.2f},{q_dot[2]:.2f}]")
             print(f"q = [{q[0]:.2f},{q[1]:.2f},{q[2]:.2f}]")
             print(f"q_deg_double = [{re.x:.2f},{re.y:.2f},{re.z:.2f}]")
@@ -229,15 +239,16 @@ def executeLoop(rd):
             print(f"re = [{xe:.2f},{ye:.2f},{ze:.2f}]")
             print("".center(80,'-'))
             print("\n")
-            sleep(2)
+            #sleep(0.5)
 
         # Evaluate the current error from the desidered position
         coordinateErr = [xd-xe,yd-ye,zd-ze]
         #rospy.loginfo("Error residual: [" + str(coordinateErr[0]) + "," + str(coordinateErr[1]) + "," + str(coordinateErr[2]) + "]\n")
 
-        sleep(1)
-
     # The final angle has been obtained with an accectable error
+    re.x += 90
+    re.y += 90
+    re.z += 90
     anglePublisher.publish(re)
 
 def connection1(data):
@@ -283,9 +294,9 @@ def CLnode_init():
 # Struct define and init ------------------------------------------------
 
 # Global variable definition --------------------------------------------
-xG = 0.01 # Gain of x coordinate
-yG = 0.01 # Gain of y coordinate
-zG = 0.01 # Gain of z coordinate
+xG = 0.025 # Gain of x coordinate
+yG = 0.025 # Gain of y coordinate
+zG = 0.025 # Gain of z coordinate
 
 xe = 0 # Value of real x coordinate
 ye = 0 # Value of real x coordinate
@@ -296,9 +307,9 @@ q = [0,0,0]
 DEBUG_VALUE_PRINTING = 1 # Print a series of variables usefull for control loop debug
 
 # Global defines --------------------------------------------------------
-ACCEPTED_ERROR = pow(10,-5) # The error below which the control loop stops
+ACCEPTED_ERROR = pow(10,-1) # The error below which the control loop stops
 re = positionArray()
-integrationStep = 0.01
+integrationStep = 0.0005
 
 # Init ------------------------------------------------------------------
 CLnode_init()
