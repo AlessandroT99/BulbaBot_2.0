@@ -17,11 +17,11 @@ from telebot import types
 from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
  
 #Administrators chat_id
-Alessandro = 486322403
-Mauro = 797772394
-Alessia = 894712918
-Stefano = 0
-Francesco = 0
+Alessandro = xxx
+Mauro = xxx
+Alessia = xxx
+Stefano = xxx
+Francesco = xxx
 Administrators = {Alessandro, Mauro, Alessia, Stefano, Francesco}
 
 #Inizialization global variables
@@ -285,7 +285,7 @@ def incoming_messages():
 				('KeyError - Unknown Flavor')
 
 #BulbaBot Token
-TOKEN = '5359903695:AAEVr-HqTxjIMSFIChgmwq-9RiWuMuiwFtQ'
+TOKEN = 'xxx'
 rate = rospy.Rate(1)	
 
 if __name__ == '__main__':
